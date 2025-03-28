@@ -53,7 +53,7 @@ Recharts - Charting library for visualizing weather data (Bar Charts, Pie Charts
 API & Data Handling
 OpenWeather API - Provides real-time weather data.
 MapPickerWithCity - Custom component for selecting locations on a map using leaflet.
-
+```bash
 📁 Project Structure
 /app
   ├── api              # API routes (weather fetching, authentication)
@@ -62,7 +62,7 @@ MapPickerWithCity - Custom component for selecting locations on a map using leaf
   ├── page.tsx          # Main application entry point
   ├── layout.tsx        # Layout configuration
   └── styles            # Global styles (Tailwind configuration)
-
+```
 
 🌈 Environment Variables
 Create a .env file in the root directory and add the following variables:
