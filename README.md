@@ -66,12 +66,12 @@ MapPickerWithCity - Custom component for selecting locations on a map using leaf
 
 🌈 Environment Variables
 Create a .env file in the root directory and add the following variables:
-
+```bash
 NEXTAUTH_SECRET=your_secret
 NEXTAUTH_URL=localhost:3000
 DATABASE_URL=postgresql://user:password@localhost:5432/yourdatabase
 OPENWEATHER_API_KEY=your_openweather_api_key
-
+```
 
 📦 Deployment
 The easiest way to deploy your Next.js app is to use the Vercel Platform.
