@@ -26,6 +26,7 @@ pnpm dev
 # or
 bun dev
 ```
+
 Open http://localhost:3000 with your browser to see the result.
 
 🔍 Features :
@@ -39,6 +40,7 @@ Open http://localhost:3000 with your browser to see the result.
 💾 Database Handling: Prisma ORM for data management with PostgreSQL.
 🌈 Dark Mode Support: Tailwind dark mode integration.
 ```
+
 📚 Dependencies
 ```bash
 Core Dependencies
@@ -48,14 +50,15 @@ Tailwind CSS - Styling framework for utility-first CSS.
 Prisma - ORM for database interaction (PostgreSQL).
 NextAuth - Authentication for Next.js applications.
 Leaflet - An open-source JavaScript library for mobile-friendly interactive maps
-```
 
 Data Visualization
 Recharts - Charting library for visualizing weather data (Bar Charts, Pie Charts).
+```
 
 API & Data Handling
 OpenWeather API - Provides real-time weather data.
 MapPickerWithCity - Custom component for selecting locations on a map using leaflet.
+
 ```bash
 📁 Project Structure
 /app
@@ -78,7 +81,6 @@ OPENWEATHER_API_KEY=your_openweather_api_key
 
 📦 Deployment
 The easiest way to deploy your Next.js app is to use the Vercel Platform.
-
 
 vercel
 Alternatively, you can deploy to any hosting provider supporting Node.js.
