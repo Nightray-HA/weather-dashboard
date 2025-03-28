@@ -29,7 +29,7 @@ bun dev
 Open http://localhost:3000 with your browser to see the result.
 
 🔍 Features :
-
+```bash
 🌤 Weather Data Fetching: Fetch real-time weather data from OpenWeather API.
 📊 Data Visualization: Display weather data using Recharts for Bar Charts and Pie Charts.
 📌 Map Picker Integration: Select locations using MapPickerWithCity component.
@@ -38,7 +38,7 @@ Open http://localhost:3000 with your browser to see the result.
 🔑 Authentication: Secure access using NextAuth.
 💾 Database Handling: Prisma ORM for data management with PostgreSQL.
 🌈 Dark Mode Support: Tailwind dark mode integration.
-
+```
 📚 Dependencies
 Core Dependencies
 Next.js 15 - React framework for server-side rendering and static site generation.
