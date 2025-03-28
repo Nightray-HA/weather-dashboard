@@ -40,12 +40,15 @@ Open http://localhost:3000 with your browser to see the result.
 🌈 Dark Mode Support: Tailwind dark mode integration.
 ```
 📚 Dependencies
+```bash
 Core Dependencies
 Next.js 15 - React framework for server-side rendering and static site generation.
 TypeScript - Type-safe development.
 Tailwind CSS - Styling framework for utility-first CSS.
 Prisma - ORM for database interaction (PostgreSQL).
 NextAuth - Authentication for Next.js applications.
+Leaflet - An open-source JavaScript library for mobile-friendly interactive maps
+```
 
 Data Visualization
 Recharts - Charting library for visualizing weather data (Bar Charts, Pie Charts).
