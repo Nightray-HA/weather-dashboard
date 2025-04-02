@@ -29,7 +29,7 @@ export default function RegisterPage() {
         setSuccessMessage(data.message || "Registrasi berhasil.");
         setTimeout(() => {
           router.push("/login");
-        }, 2000);
+        }, 5000);
       } else {
         setError(data.message || "Gagal registrasi");
       }

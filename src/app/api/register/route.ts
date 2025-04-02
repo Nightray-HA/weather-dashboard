@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       `,
     });
 
-    return NextResponse.json({ message: "Registrasi berhasil. Silakan cek email untuk verifikasi." });
+    return NextResponse.json({ message: "Registrasi berhasil. Silakan cek email untuk aktivasi akun anda." });
   } catch (err) {
     console.error(err);
     return NextResponse.json(

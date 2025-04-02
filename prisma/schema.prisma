@@ -16,18 +16,71 @@ model User {
   createdAt      DateTime  @default(now())
 }
 
-
 model Weather {
-  id        Int      @id @default(autoincrement())
-  city      String
-  lat       Float
-  lon       Float
-  temp      Float
-  humidity  Int
-  rain      Float?
-  condition String
-  timestamp DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  city          String
+  country       String
+  lat           Float
+  lon           Float
+  temp          Float
+  feels_like    Float
+  temp_min      Float
+  temp_max      Float
+  pressure      Int
+  sea_level     Int?
+  grnd_level    Int?
+  humidity      Int
+  visibility    Int
+  wind_speed    Float
+  wind_deg      Int
+  wind_gust     Float?
+  clouds        Int
+  rain          Float?
+  condition     String
+  description   String
+  icon          String
+  timezone      Int
+  sunrise       DateTime
+  sunset        DateTime
+  timestamp     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  
+  histories     WeatherHistory[]
 }
+
+model WeatherHistory {
+  id            Int      @id @default(autoincrement())
+  weatherId     Int
+  city          String
+  country       String
+  lat           Float
+  lon           Float
+  temp          Float
+  feels_like    Float
+  temp_min      Float
+  temp_max      Float
+  pressure      Int
+  sea_level     Int?
+  grnd_level    Int?
+  humidity      Int
+  visibility    Int
+  wind_speed    Float
+  wind_deg      Int
+  wind_gust     Float?
+  clouds        Int
+  rain          Float?
+  condition     String
+  description   String
+  icon          String
+  timezone      Int
+  sunrise       DateTime
+  sunset        DateTime
+  timestamp     DateTime
+  
+  weather       Weather @relation(fields: [weatherId], references: [id])
+}
+
 
 model VerificationToken {
   id        Int      @id @default(autoincrement())

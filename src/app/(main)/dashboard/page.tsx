@@ -1,13 +1,30 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { getWeatherCategory } from "@/lib/weatherCategory";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
-  Legend, ResponsiveContainer
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
-import Pagination from "@/components/Pagination";
+
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  flexRender,
+} from "@tanstack/react-table";
 
 type WeatherData = {
   id: number;
@@ -16,9 +33,13 @@ type WeatherData = {
   lon: number;
   temp: number;
   humidity: number;
+  pressure: number;
+  visibility: number;
+  wind_speed: number;
   rain: number | null;
   timestamp: string;
   condition?: string;
+  updatedAt: string;
 };
 
 const presetCities = [
@@ -31,20 +52,22 @@ const presetCities = [
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28BFF"];
 
+// Menggunakan dynamic import untuk MapPickerWithCity agar tidak di-render di server
 const MapPickerWithCity = dynamic(() => import("@/components/MapPickerWithCity"), { ssr: false });
 
 export default function DashboardPage() {
   const [data, setData] = useState<WeatherData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // State for input & city selection
   const [city, setCity] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [selectedPreset, setSelectedPreset] = useState("");
   const [fetching, setFetching] = useState(false);
   const [message, setMessage] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
+  // Fetch data on mount
   useEffect(() => {
     getData();
   }, []);
@@ -53,10 +76,42 @@ export default function DashboardPage() {
     setLoading(true);
     const res = await fetch("/api/weather/list");
     const json = await res.json();
-    setData(json);
+
+    if (Array.isArray(json)) {
+      setData(json);
+    } else if (json && Array.isArray(json.data)) {
+      setData(json.data);
+    } else {
+      setData([]);
+    }
     setLoading(false);
   };
 
+  const handleUpdateWeather = async () => {
+    setFetching(true);
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/weather/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await res.json();
+
+      if (res.ok) {
+        setMessage("✅ Semua data cuaca berhasil diperbarui.");
+        getData();
+      } else {
+        setMessage(`❌ ${json.message}`);
+      }
+    } catch (error) {
+      setMessage("❌ Gagal memperbarui data cuaca.");
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  // Pilih kota dari dropdown
   const handleCitySelect = async (cityName: string) => {
     setSelectedPreset(cityName);
     setCity(cityName);
@@ -78,12 +133,12 @@ export default function DashboardPage() {
     }
   };
 
+  // Fetch cuaca
   const handleFetchWeather = async () => {
     if (!city || !lat || !lon) {
       setMessage("⚠️ Mohon isi kota, lat, dan lon.");
       return;
     }
-
     setFetching(true);
     setMessage("");
 
@@ -92,7 +147,6 @@ export default function DashboardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ city, lat: parseFloat(lat), lon: parseFloat(lon) }),
     });
-
     const json = await res.json();
 
     if (res.ok) {
@@ -101,32 +155,156 @@ export default function DashboardPage() {
     } else {
       setMessage(`❌ ${json.message}`);
     }
-
     setFetching(false);
   };
 
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const columnHelper = createColumnHelper<WeatherData>();
+  const columns = [
+    // Nama Kota (link ke /city/[id])
+    columnHelper.accessor("city", {
+      id: "cityLink",
+      header: "Kota",
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <Link href={`/city/${row.id}`} className="text-blue-600 underline">
+            {row.city}
+          </Link>
+        );
+      },
+    }),
+    // Tekanan Udara
+    columnHelper.accessor("pressure", {
+      header: "Tekanan Udara (hPa)",
+    }),
+    // Jarak Pandang
+    columnHelper.accessor("visibility", {
+      header: "Jarak Pandang (m)",
+    }),
+    // Kecepatan Angin
+    columnHelper.accessor("wind_speed", {
+      header: "Wind Speed (m/s)",
+    }),
+    // Suhu & kategori
+    columnHelper.accessor("temp", {
+      id: "tempInfo",
+      header: "Suhu (°C)",
+      cell: (info) => {
+        const row = info.row.original;
+        const cat = getWeatherCategory({
+          temp: row.temp,
+          humidity: row.humidity,
+          rain: row.rain ?? 0,
+          condition: row.condition || "Clear",
+        });
+        return (
+          <div>
+            <div>Suhu: {row.temp}°C</div>
+            <div className="text-sm text-gray-500">Kategori: {cat.suhuKategori}</div>
+          </div>
+        );
+      },
+    }),
+    // Kelembapan
+    columnHelper.accessor("humidity", {
+      id: "humidityInfo",
+      header: "Kelembapan",
+      cell: (info) => {
+        const row = info.row.original;
+        const cat = getWeatherCategory({
+          temp: row.temp,
+          humidity: row.humidity,
+          rain: row.rain ?? 0,
+          condition: row.condition || "Clear",
+        });
+        return (
+          <div>
+            <div>{row.humidity}%</div>
+            <div className="text-xs text-gray-500">{cat.kelembapanAlert}</div>
+          </div>
+        );
+      },
+    }),
+    // Curah Hujan
+    columnHelper.accessor("rain", {
+      id: "rainInfo",
+      header: "Curah Hujan",
+      cell: (info) => {
+        const row = info.row.original;
+        const cat = getWeatherCategory({
+          temp: row.temp,
+          humidity: row.humidity,
+          rain: row.rain ?? 0,
+          condition: row.condition || "Clear",
+        });
+        return (
+          <div>
+            <div>{row.rain ?? 0} mm</div>
+            <div className="text-xs text-gray-500">{cat.hujanKategori}</div>
+          </div>
+        );
+      },
+    }),
+    // Kondisi Cuaca + Timestamp
+    columnHelper.accessor("condition", {
+      id: "conditionInfo",
+      header: "Kondisi",
+      cell: (info) => {
+        const row = info.row.original;
+        const cat = getWeatherCategory({
+          temp: row.temp,
+          humidity: row.humidity,
+          rain: row.rain ?? 0,
+          condition: row.condition || "Clear",
+        });
+        return (
+          <div>
+            <div className="font-semibold">{cat.conditionCategory}</div>
+            <div className="text-xs text-gray-500">
+              {new Date(row.timestamp).toLocaleString()}
+            </div>
+          </div>
+        );
+      },
+    }),
+    // last updated
+    columnHelper.accessor("updatedAt", {
+      id: "updatedAt",
+      header: "Terakhir Diperbarui",
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <div className="text-xs text-gray-500">
+            {new Date(row.updatedAt).toLocaleString()}
+          </div>
+        );
+      },
+    }),
+  ];
+
+  // Instance table
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 7,
+      },
+    },
+  });
 
   const rainCategoryCount = data.reduce<Record<string, number>>((acc, item) => {
-    const category = getWeatherCategory({
+    const cat = getWeatherCategory({
       temp: item.temp,
       humidity: item.humidity,
       rain: item.rain ?? 0,
       condition: item.condition || "Clear",
     }).hujanKategori;
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {});
-
-  const weatherConditionCount = data.reduce<Record<string, number>>((acc, item) => {
-    const category = getWeatherCategory({
-      temp: item.temp,
-      humidity: item.humidity,
-      rain: item.rain ?? 0,
-      condition: item.condition || "Clear",
-    }).conditionCategory;
-    acc[category] = (acc[category] || 0) + 1;
+    acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {});
 
@@ -134,6 +312,17 @@ export default function DashboardPage() {
     kategori: key,
     Jumlah: value,
   }));
+
+  const weatherConditionCount = data.reduce<Record<string, number>>((acc, item) => {
+    const cat = getWeatherCategory({
+      temp: item.temp,
+      humidity: item.humidity,
+      rain: item.rain ?? 0,
+      condition: item.condition || "Clear",
+    }).conditionCategory;
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
 
   const pieChartData = Object.entries(weatherConditionCount).map(([key, value]) => ({
     name: key,
@@ -155,9 +344,13 @@ export default function DashboardPage() {
             onChange={(e) => handleCitySelect(e.target.value)}
             className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-md text-sm w-[200px]"
           >
-            <option value="" disabled hidden>Pilih kota</option>
-            {presetCities.map((city) => (
-              <option key={city.value} value={city.value}>{city.label}</option>
+            <option value="" disabled hidden>
+              Pilih kota
+            </option>
+            {presetCities.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
             ))}
           </select>
         </div>
@@ -234,15 +427,7 @@ export default function DashboardPage() {
           <h3 className="text-lg font-semibold mb-3">🌤 Sebaran Cuaca</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie
-                data={pieChartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label
-              >
+              <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                 {pieChartData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -254,66 +439,78 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Tabel Cuaca dengan Pagination */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">🧾 Tabel Data Cuaca</h2>
-        <div className="overflow-x-auto border rounded-lg">
+      {/* Table TanStack with Sorting */}
+      <section className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-3">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">🧾 Tabel Data Cuaca</h2>
+            <button
+            onClick={handleUpdateWeather}
+            disabled={fetching}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-md disabled:opacity-50"
+            >
+            {fetching ? "Memperbarui..." : "Update Cuaca"}
+            </button>
+        </div>
+
+        {message && <p className="text-sm text-blue-700 mt-2">{message}</p>}
+        <div className="overflow-x-auto border rounded-lg mt-3">
           {loading ? (
             <p className="p-4">Memuat data...</p>
           ) : (
-            <>
-              <table className="min-w-full text-sm text-left">
-                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                  <tr>
-                    <th className="p-2">Kota</th>
-                    <th className="p-2">Cuaca</th>
-                    <th className="p-2">Suhu (°C)</th>
-                    <th className="p-2">Kategori Suhu</th>
-                    <th className="p-2">Kelembapan</th>
-                    <th className="p-2">Kategori Kelembapan</th>
-                    <th className="p-2">Hujan</th>
-                    <th className="p-2">Kategori Hujan</th>
-                    <th className="p-2">Waktu</th>
+            <table className="min-w-full text-sm text-left">
+              <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="p-2 border cursor-pointer"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? ""}
+                      </th>
+                    ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {paginatedData.map((w) => {
-                    const category = getWeatherCategory({
-                      temp: w.temp,
-                      humidity: w.humidity,
-                      rain: w.rain ?? 0,
-                      condition: w.condition || "Clear",
-                    });
-
-                    const highlight = category.suhuKategori === "Panas Ekstrem" || category.hujanKategori === "Hujan Lebat"
-                      ? "bg-red-50 dark:bg-red-900/20"
-                      : "";
-
-                    return (
-                      <tr key={w.id} className={`border-t ${highlight}`}>
-                        <td className="p-2">{w.city}</td>
-                        <td className="p-2">{category.conditionCategory}</td>
-                        <td className="p-2">{w.temp}</td>
-                        <td className="p-2">{category.suhuKategori}</td>
-                        <td className="p-2">{w.humidity}%</td>
-                        <td className="p-2">{category.kelembapanAlert}</td>
-                        <td className="p-2">{w.rain ?? 0} mm</td>
-                        <td className="p-2">{category.hujanKategori}</td>
-                        <td className="p-2">{new Date(w.timestamp).toLocaleString()}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-
-              {/* Pagination */}
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
-              />
-            </>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-t">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="p-2 border">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-sm rounded disabled:opacity-50"
+          >
+            ← Previous
+          </button>
+          <span className="text-sm">
+            Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
+          </span>
+          <button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-sm rounded disabled:opacity-50"
+          >
+            Next →
+          </button>
         </div>
       </section>
     </div>
