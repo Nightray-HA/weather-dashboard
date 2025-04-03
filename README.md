@@ -62,7 +62,7 @@ MapPickerWithCity - Custom component for selecting locations on a map using leaf
 ```bash
 📁 Project Structure
 /app
-  ├── api              # API routes (weather fetching, authentication)
+  ├── api               # API routes (weather fetching, authentication)
   ├── components        # Reusable UI components (Charts, LogoutButton, etc.)
   ├── lib               # Utility functions (e.g., Weather Category Handling)
   ├── page.tsx          # Main application entry point
