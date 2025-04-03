@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Lat, Lon, dan Kota wajib diisi." }, { status: 400 });
     }
 
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}&units=metric&appid=${API_KEY}`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
     console.log("Fetching:", url);
 
     const res = await fetch(url);

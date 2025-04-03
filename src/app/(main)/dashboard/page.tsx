@@ -44,10 +44,10 @@ type WeatherData = {
 
 const presetCities = [
   { label: "Jakarta", value: "Jakarta" },
-  { label: "Bandung", value: "Bandung" },
+  { label: "Bandung City", value: "Bandung City" },
   { label: "Surabaya", value: "Surabaya" },
   { label: "Yogyakarta", value: "Yogyakarta" },
-  { label: "Medan", value: "Medan" },
+  { label: "City Of Medan", value: "City Of Medan" },
 ];
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28BFF"];
@@ -124,6 +124,7 @@ export default function DashboardPage() {
       if (data.lat && data.lon) {
         setLat(data.lat.toString());
         setLon(data.lon.toString());
+
         setMessage("✅ Koordinat ditemukan.");
       } else {
         setMessage("❌ Kota tidak ditemukan.");
@@ -167,7 +168,7 @@ export default function DashboardPage() {
       cell: (info) => {
         const row = info.row.original;
         return (
-          <Link href={`/city/${row.id}`} className="text-blue-600 underline">
+          <Link href={`/city/${row.id}`} className="text-[#FFFF00] underline flex items-center gap-1">
             {row.city}
           </Link>
         );
@@ -225,26 +226,6 @@ export default function DashboardPage() {
         );
       },
     }),
-    // Curah Hujan
-    columnHelper.accessor("rain", {
-      id: "rainInfo",
-      header: "Curah Hujan",
-      cell: (info) => {
-        const row = info.row.original;
-        const cat = getWeatherCategory({
-          temp: row.temp,
-          humidity: row.humidity,
-          rain: row.rain ?? 0,
-          condition: row.condition || "Clear",
-        });
-        return (
-          <div>
-            <div>{row.rain ?? 0} mm</div>
-            <div className="text-xs text-gray-500">{cat.hujanKategori}</div>
-          </div>
-        );
-      },
-    }),
     // Kondisi Cuaca + Timestamp
     columnHelper.accessor("condition", {
       id: "conditionInfo",
@@ -263,6 +244,26 @@ export default function DashboardPage() {
             <div className="text-xs text-gray-500">
               {new Date(row.timestamp).toLocaleString()}
             </div>
+          </div>
+        );
+      },
+    }),
+    // Curah Hujan
+    columnHelper.accessor("rain", {
+      id: "rainInfo",
+      header: "Curah Hujan",
+      cell: (info) => {
+        const row = info.row.original;
+        const cat = getWeatherCategory({
+          temp: row.temp,
+          humidity: row.humidity,
+          rain: row.rain ?? 0,
+          condition: row.condition || "Clear",
+        });
+        return (
+          <div>
+            <div>{row.rain ?? 0} mm</div>
+            <div className="text-xs text-gray-500">{cat.hujanKategori}</div>
           </div>
         );
       },
@@ -337,25 +338,26 @@ export default function DashboardPage() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
         <h2 className="text-xl font-semibold">📍 Ambil Data Cuaca</h2>
 
-        <div className="flex flex-wrap gap-3 items-center">
-          <label className="text-sm font-medium">Kota Populer:</label>
-          <select
-            value={selectedPreset}
-            onChange={(e) => handleCitySelect(e.target.value)}
-            className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-md text-sm w-[200px]"
-          >
-            <option value="" disabled hidden>
-              Pilih kota
-            </option>
-            {presetCities.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+
 
         <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 mr-auto items-center">
+            <label className="text-sm font-medium">Kota Populer:</label>
+            <select
+              value={selectedPreset}
+              onChange={(e) => handleCitySelect(e.target.value)}
+              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-md text-sm w-[200px]"
+            >
+              <option value="" disabled hidden>
+                Pilih kota
+              </option>
+              {presetCities.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <input
             className="border px-3 py-2 rounded-md w-[150px] text-sm"
             placeholder="Nama Kota"
@@ -364,6 +366,7 @@ export default function DashboardPage() {
               setCity(e.target.value);
               setSelectedPreset("");
             }}
+            readOnly={true}
           />
           <input
             className="border px-3 py-2 rounded-md w-[120px] text-sm"
@@ -373,6 +376,7 @@ export default function DashboardPage() {
               setLat(e.target.value);
               setSelectedPreset("");
             }}
+            readOnly={true}
           />
           <input
             className="border px-3 py-2 rounded-md w-[120px] text-sm"
@@ -382,6 +386,7 @@ export default function DashboardPage() {
               setLon(e.target.value);
               setSelectedPreset("");
             }}
+            readOnly={true}
           />
           <button
             onClick={handleFetchWeather}
@@ -397,6 +402,8 @@ export default function DashboardPage() {
         </p>
 
         <MapPickerWithCity
+          lat={lat}
+          lon={lon}
           onSelect={(latVal, lonVal, cityName) => {
             setLat(latVal);
             setLon(lonVal);
@@ -443,13 +450,13 @@ export default function DashboardPage() {
       <section className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-3">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">🧾 Tabel Data Cuaca</h2>
-            <button
+          <button
             onClick={handleUpdateWeather}
             disabled={fetching}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-md disabled:opacity-50"
-            >
+          >
             {fetching ? "Memperbarui..." : "Update Cuaca"}
-            </button>
+          </button>
         </div>
 
         {message && <p className="text-sm text-blue-700 mt-2">{message}</p>}

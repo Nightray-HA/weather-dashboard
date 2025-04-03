@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,10 +14,24 @@ L.Icon.Default.mergeOptions({
 
 type Props = {
   onSelect: (lat: string, lon: string, city: string) => void;
+  lat?: string;
+  lon?: string;
 };
 
-function ClickHandler({ onSelect }: Props) {
+function ClickHandler({ onSelect, lat, lon }: Props) {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const map = useMap();
+
+  useEffect(() => {
+    if (lat && lon) {
+      const parsedLat = parseFloat(lat);
+      const parsedLon = parseFloat(lon);
+      if (!isNaN(parsedLat) && !isNaN(parsedLon)) {
+        setPosition({ lat: parsedLat, lng: parsedLon });
+        map.setView([parsedLat, parsedLon], map.getZoom());
+      }
+    }
+  }, [lat, lon, map]);
 
   useMapEvents({
     async click(e) {
@@ -39,11 +53,14 @@ function ClickHandler({ onSelect }: Props) {
   return position ? <Marker position={position} /> : null;
 }
 
-export default function MapPickerWithCity({ onSelect }: Props) {
+export default function MapPickerWithCity({ onSelect, lat, lon }: Props) {
+  const defaultLat = lat ? parseFloat(lat) : -6.2;
+  const defaultLon = lon ? parseFloat(lon) : 106.8;
+
   return (
     <div className="h-[50vh] w-full mt-4 rounded-md overflow-hidden">
       <MapContainer
-        center={[-6.2, 106.8]}
+        center={[defaultLat, defaultLon]}
         zoom={5}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
@@ -52,7 +69,7 @@ export default function MapPickerWithCity({ onSelect }: Props) {
           attribution='&copy; <a href="https://osm.org/">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ClickHandler onSelect={onSelect} />
+        <ClickHandler onSelect={onSelect} lat={lat} lon={lon} />
       </MapContainer>
     </div>
   );

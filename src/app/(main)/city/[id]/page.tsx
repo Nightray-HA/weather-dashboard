@@ -11,7 +11,14 @@ type Props = {
 };
 
 export default async function CityDetailPage({ params }: Props) {
-  const weatherId = parseInt(params.id, 10);
+  const { id } = await params;
+  const weatherId = parseInt(id, 10);
+
+  if (isNaN(weatherId)) {
+    return (
+      <div className="p-6 text-red-500 text-lg text-center">ID tidak valid.</div>
+    );
+  }
 
   const weather = await prisma.weather.findUnique({
     where: { id: weatherId },
@@ -51,54 +58,21 @@ export default async function CityDetailPage({ params }: Props) {
       <section className="bg-white dark:bg-gray-800 p-4 rounded shadow-md">
         <h1 className="text-2xl font-bold mb-3">Detail Cuaca: {weather.city}</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <p>
-            <strong>ID:</strong> {weather.id}
-          </p>
-          <p>
-            <strong>Kota:</strong> {weather.city}
-          </p>
-          <p>
-            <strong>Koordinat:</strong> {weather.lat}, {weather.lon}
-          </p>
-          <p>
-            <strong>Suhu:</strong> {weather.temp} °C
-          </p>
-          <p>
-            <strong>Kelembapan:</strong> {weather.humidity}%
-          </p>
-          <p>
-            <strong>Curah Hujan:</strong> {weather.rain ?? 0} mm
-          </p>
-          <p>
-            <strong>Kondisi:</strong> {weather.condition}
-          </p>
-          <p>
-            <strong>Waktu Data:</strong>{" "}
-            {new Date(weather.timestamp).toLocaleString("id-ID")}
-          </p>
-          <p>
-            <strong>Sunrise:</strong>{" "}
-            {new Date(weather.sunrise).toLocaleTimeString("id-ID")}
-          </p>
-          <p>
-            <strong>Sunset:</strong>{" "}
-            {new Date(weather.sunset).toLocaleTimeString("id-ID")}
-          </p>
-          <p>
-            <strong>Wind Speed:</strong> {weather.wind_speed} m/s
-          </p>
-          <p>
-            <strong>Wind Deg:</strong> {weather.wind_deg}°
-          </p>
-          <p>
-            <strong>Wind Gust:</strong> {weather.wind_gust ?? 0} m/s
-          </p>
-          <p>
-            <strong>Tekanan (pressure):</strong> {weather.pressure} hPa
-          </p>
-          <p>
-            <strong>Visibility:</strong> {weather.visibility} m
-          </p>
+          <p><strong>Kode Negara:</strong> {weather.country}</p>
+          <p><strong>Kota:</strong> {weather.city}</p>
+          <p><strong>Koordinat:</strong> {weather.lat}, {weather.lon}</p>
+          <p><strong>Suhu:</strong> {weather.temp} °C</p>
+          <p><strong>Kelembapan:</strong> {weather.humidity}%</p>
+          <p><strong>Curah Hujan:</strong> {weather.rain ?? 0} mm</p>
+          <p><strong>Kondisi:</strong> {weather.condition}</p>
+          <p><strong>Waktu Data:</strong> {new Date(weather.timestamp).toLocaleString("id-ID")}</p>
+          <p><strong>Sunrise:</strong> {new Date(weather.sunrise).toLocaleTimeString("id-ID")}</p>
+          <p><strong>Sunset:</strong> {new Date(weather.sunset).toLocaleTimeString("id-ID")}</p>
+          <p><strong>Wind Speed:</strong> {weather.wind_speed} m/s</p>
+          <p><strong>Wind Deg:</strong> {weather.wind_deg}°</p>
+          <p><strong>Wind Gust:</strong> {weather.wind_gust ?? 0} m/s</p>
+          <p><strong>Tekanan Udara:</strong> {weather.pressure} hPa</p>
+          <p><strong>Jarak Pandang:</strong> {weather.visibility} m</p>
         </div>
       </section>
 
@@ -107,20 +81,21 @@ export default async function CityDetailPage({ params }: Props) {
         <h2 className="text-xl font-bold mb-3">Riwayat Cuaca</h2>
 
         {weather.histories.length === 0 ? (
-          <p className="text-gray-500">Belum ada history cuaca yang disimpan.</p>
+          <p className="text-gray-500">Belum ada riwayat cuaca yang disimpan.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left border border-gray-200">
               <thead>
                 <tr>
+                  <th className="p-2 border">Kode Negara</th>
                   <th className="p-2 border">Kota</th>
                   <th className="p-2 border">Suhu</th>
                   <th className="p-2 border">Kategori</th>
-                  <th className="p-2 border">Humidity</th>
-                  <th className="p-2 border">Tingkat Kelembapan</th>
-                  <th className="p-2 border">Rain (mm)</th>
+                  <th className="p-2 border">Kelembapan</th>
+                  <th className="p-2 border">Kategori Kelembapan</th>
+                  <th className="p-2 border">Curah Hujan</th>
                   <th className="p-2 border">Kategori Hujan</th>
-                  <th className="p-2 border">Condition</th>
+                  <th className="p-2 border">Kondisi</th>
                   <th className="p-2 border">Wind Speed</th>
                   <th className="p-2 border">Kategori Angin</th>
                   <th className="p-2 border">Sunrise</th>
@@ -140,25 +115,20 @@ export default async function CityDetailPage({ params }: Props) {
 
                   return (
                     <tr key={hist.id} className="border-t">
+                      <td className="p-2 border">{hist.country}</td>
                       <td className="p-2 border">{hist.city}</td>
                       <td className="p-2 border">{hist.temp} °C</td>
                       <td className="p-2 border">{cat.suhuKategori}</td>
                       <td className="p-2 border">{hist.humidity}%</td>
                       <td className="p-2 border">{cat.kelembapanAlert}</td>
-                      <td className="p-2 border">{hist.rain ?? 0}</td>
+                      <td className="p-2 border">{hist.rain ?? 0} mm</td>
                       <td className="p-2 border">{cat.hujanKategori}</td>
                       <td className="p-2 border">{cat.conditionCategory}</td>
-                      <td className="p-2 border">{hist.wind_speed}</td>
+                      <td className="p-2 border">{hist.wind_speed} m/s</td>
                       <td className="p-2 border">{cat.windCategory}</td>
-                      <td className="p-2 border">
-                        {new Date(hist.sunrise).toLocaleTimeString("id-ID")}
-                      </td>
-                      <td className="p-2 border">
-                        {new Date(hist.sunset).toLocaleTimeString("id-ID")}
-                      </td>
-                      <td className="p-2 border">
-                        {new Date(hist.timestamp).toLocaleString("id-ID")}
-                      </td>
+                      <td className="p-2 border">{new Date(hist.sunrise).toLocaleTimeString("id-ID")}</td>
+                      <td className="p-2 border">{new Date(hist.sunset).toLocaleTimeString("id-ID")}</td>
+                      <td className="p-2 border">{new Date(hist.timestamp).toLocaleString("id-ID")}</td>
                     </tr>
                   );
                 })}
